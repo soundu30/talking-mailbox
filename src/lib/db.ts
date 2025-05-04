@@ -16,7 +16,7 @@ export interface User {
   email: string;
 }
 
-const STORAGE_KEY = "voice_mail_wizard_data";
+const STORAGE_KEY = "talking_mailbox_data";
 const DEFAULT_USER: User = {
   id: "1",
   name: "User",
@@ -484,12 +484,19 @@ export const db = {
   getEmails: (): Email[] => {
     const storedData = localStorage.getItem(STORAGE_KEY);
     if (storedData) {
-      const data = JSON.parse(storedData);
-      // Convert date strings back to Date objects
-      return data.map((email: any) => ({
-        ...email,
-        date: new Date(email.date)
-      }));
+      try {
+        const data = JSON.parse(storedData);
+        // Convert date strings back to Date objects
+        return data.map((email: any) => ({
+          ...email,
+          date: new Date(email.date)
+        }));
+      } catch (error) {
+        console.error("Error parsing stored emails:", error);
+        // If there's an error parsing, initialize with sample data
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(SAMPLE_EMAILS));
+        return SAMPLE_EMAILS;
+      }
     } else {
       // Initialize with sample data on first load
       localStorage.setItem(STORAGE_KEY, JSON.stringify(SAMPLE_EMAILS));

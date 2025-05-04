@@ -59,6 +59,10 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Set up recognition event handlers
     recognition.onStartListening(() => {
       setIsListening(true);
+      toast({ 
+        title: "Voice Recognition Active",
+        description: "I'm listening for commands now"
+      });
     });
     
     recognition.onStopListening(() => {
@@ -67,10 +71,20 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     
     recognition.onResult((result) => {
       setTranscript(result);
+      console.log("Voice command received:", result);
     });
     
     recognition.onInterimResult((result) => {
       setInterimTranscript(result);
+    });
+    
+    recognition.onError((error) => {
+      console.error("Voice recognition error:", error);
+      toast({
+        title: "Voice Recognition Error",
+        description: "There was a problem with voice recognition.",
+        variant: "destructive"
+      });
     });
     
     // Load initial emails
@@ -94,6 +108,11 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
       setComposeMode(true);
       setDraftEmail(prev => ({ ...prev, to }));
       voiceSynthesis.speak("Creating new email" + (to ? ` to ${to}` : ""));
+      
+      toast({
+        title: "New Email",
+        description: `Creating new email${to ? ` to ${to}` : ""}`
+      });
     });
 
     // Command: Set subject
@@ -101,8 +120,18 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (composeMode) {
         setDraftEmail(prev => ({ ...prev, subject }));
         voiceSynthesis.speak(`Subject set to: ${subject}`);
+        
+        toast({
+          title: "Subject Set",
+          description: subject
+        });
       } else {
         voiceSynthesis.speak("Please compose an email first before setting the subject");
+        toast({
+          title: "Action Not Available",
+          description: "Please compose an email first",
+          variant: "destructive"
+        });
       }
     });
 
@@ -112,8 +141,18 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
         const messageContent = message1 || message2;
         setDraftEmail(prev => ({ ...prev, body: messageContent }));
         voiceSynthesis.speak("Message body updated");
+        
+        toast({
+          title: "Message Updated",
+          description: "Email body has been updated"
+        });
       } else {
         voiceSynthesis.speak("Please compose an email first before setting the message");
+        toast({
+          title: "Action Not Available",
+          description: "Please compose an email first",
+          variant: "destructive"
+        });
       }
     });
 
@@ -123,6 +162,11 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
         sendEmail();
       } else {
         voiceSynthesis.speak("No email to send. Please compose an email first.");
+        toast({
+          title: "No Email to Send",
+          description: "Please compose an email first",
+          variant: "destructive"
+        });
       }
     });
 
@@ -135,8 +179,16 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
         )[0];
         
         readEmail(latestEmail);
+        toast({
+          title: "Reading Email",
+          description: `From: ${latestEmail.from}`
+        });
       } else {
         voiceSynthesis.speak("You have no emails to read");
+        toast({
+          title: "No Emails",
+          description: "Your inbox is empty"
+        });
       }
     });
 
@@ -150,8 +202,17 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
           b.date.getTime() - a.date.getTime()
         )[0];
         readEmail(latestUnread);
+        
+        toast({
+          title: "Reading Unread Email",
+          description: `From: ${latestUnread.from}`
+        });
       } else {
         voiceSynthesis.speak("You have no unread emails");
+        toast({
+          title: "No Unread Emails",
+          description: "All emails have been read"
+        });
       }
     });
 
@@ -167,8 +228,16 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
         )[0];
         
         readEmail(latestFromSender);
+        toast({
+          title: `Email from ${sender}`,
+          description: latestFromSender.subject
+        });
       } else {
         voiceSynthesis.speak(`No emails found from ${sender}`);
+        toast({
+          title: "No Matching Emails",
+          description: `No emails found from ${sender}`
+        });
       }
     });
 
@@ -179,6 +248,11 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
         voiceSynthesis.speak("Email deleted");
       } else {
         voiceSynthesis.speak("No email selected");
+        toast({
+          title: "No Email Selected",
+          description: "Please select an email first",
+          variant: "destructive"
+        });
       }
     });
 
@@ -187,6 +261,10 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
       setComposeMode(false);
       setCurrentEmail(null);
       voiceSynthesis.speak("Back to inbox");
+      toast({
+        title: "Inbox",
+        description: "Viewing all emails"
+      });
     });
 
     // Command to count unread emails
@@ -195,8 +273,39 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (checkUnread) {
         const unreadCount = emails.filter(email => !email.read).length;
         voiceSynthesis.speak(`You have ${unreadCount} unread emails`);
+        toast({
+          title: "Unread Count",
+          description: `${unreadCount} unread emails`
+        });
       } else {
         voiceSynthesis.speak(`You have ${emails.length} total emails`);
+        toast({
+          title: "Email Count",
+          description: `${emails.length} total emails`
+        });
+      }
+    });
+
+    // Command: Search for emails
+    voiceRecognition.addCommand(/search( for)? (.+)/i, (_, __, searchTerm) => {
+      const results = emails.filter(email => 
+        email.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.body.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        email.from.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      
+      if (results.length > 0) {
+        voiceSynthesis.speak(`Found ${results.length} emails matching "${searchTerm}"`);
+        toast({
+          title: "Search Results",
+          description: `${results.length} emails found for "${searchTerm}"`
+        });
+      } else {
+        voiceSynthesis.speak(`No emails found matching "${searchTerm}"`);
+        toast({
+          title: "No Results",
+          description: `No emails found for "${searchTerm}"`
+        });
       }
     });
 
@@ -204,9 +313,48 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     voiceRecognition.addCommand(/stop listening/i, () => {
       voiceSynthesis.speak("Stopping voice recognition");
       voiceRecognition.stop();
+      toast({
+        title: "Voice Recognition Stopped",
+        description: "Click the microphone to start again"
+      });
     });
 
-  }, [voiceRecognition, voiceSynthesis, composeMode, emails, currentEmail]);
+    // Command: Mark as read/unread
+    voiceRecognition.addCommand(/mark as (un)?read/i, (_, unreadMatch) => {
+      if (currentEmail) {
+        const isMarkingUnread = !!unreadMatch;
+        if (isMarkingUnread) {
+          // This would need a markAsUnread function in db
+          // For now we'll just update in local state
+          setEmails(prevEmails => 
+            prevEmails.map(e => e.id === currentEmail.id ? { ...e, read: false } : e)
+          );
+          voiceSynthesis.speak("Email marked as unread");
+          toast({
+            title: "Marked as Unread",
+            description: "Email has been marked as unread"
+          });
+        } else {
+          db.markAsRead(currentEmail.id);
+          setEmails(prevEmails => 
+            prevEmails.map(e => e.id === currentEmail.id ? { ...e, read: true } : e)
+          );
+          voiceSynthesis.speak("Email marked as read");
+          toast({
+            title: "Marked as Read",
+            description: "Email has been marked as read"
+          });
+        }
+      } else {
+        voiceSynthesis.speak("No email selected");
+        toast({
+          title: "No Email Selected",
+          description: "Please select an email first"
+        });
+      }
+    });
+
+  }, [voiceRecognition, voiceSynthesis, composeMode, emails, currentEmail, sendEmail, deleteEmail, readEmail]);
 
   // Function to toggle voice recognition
   const toggleListening = () => {

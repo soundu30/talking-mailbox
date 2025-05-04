@@ -32,6 +32,7 @@ export const VoiceIndicator = () => {
             ? "bg-gradient-to-r from-purple-500 to-indigo-600 pulse-animation" 
             : "bg-gradient-to-r from-gray-200 to-gray-300 text-gray-600"
         )}
+        aria-label={isListening ? "Stop listening" : "Start listening"}
       >
         {isListening ? (
           <>

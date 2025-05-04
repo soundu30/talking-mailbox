@@ -9,7 +9,7 @@ export const Header = () => {
       <div className="container mx-auto flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Mail className="h-6 w-6" />
-          <h1 className="text-xl font-bold">Voice Mail Wizard</h1>
+          <h1 className="text-xl font-bold">Talking Mailbox</h1>
         </div>
         <VoiceWaveform />
       </div>
