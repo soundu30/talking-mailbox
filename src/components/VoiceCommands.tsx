@@ -7,6 +7,12 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { VoiceWaveform } from './VoiceIndicator';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableRow
+} from '@/components/ui/table';
 
 export const VoiceCommands = () => {
   const commands = [
@@ -16,6 +22,10 @@ export const VoiceCommands = () => {
     { command: "message [text]", description: "Set email body" },
     { command: "send", description: "Send current email" },
     { command: "read", description: "Read latest email" },
+    { command: "read unread", description: "Read the latest unread email" },
+    { command: "read email from [name]", description: "Read email from specific person" },
+    { command: "how many emails", description: "Count total emails" },
+    { command: "how many unread emails", description: "Count unread emails" },
     { command: "delete", description: "Delete current email" },
     { command: "inbox", description: "Return to inbox" },
     { command: "stop listening", description: "Turn off voice recognition" }
@@ -29,15 +39,17 @@ export const VoiceCommands = () => {
           <VoiceWaveform />
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <ul className="space-y-2">
-          {commands.map((cmd, idx) => (
-            <li key={idx} className="flex">
-              <span className="inline-block w-40 font-medium text-primary">"{cmd.command}"</span>
-              <span className="text-gray-600">{cmd.description}</span>
-            </li>
-          ))}
-        </ul>
+      <CardContent className="max-h-[600px] overflow-y-auto">
+        <Table>
+          <TableBody>
+            {commands.map((cmd, idx) => (
+              <TableRow key={idx}>
+                <TableCell className="font-medium text-primary w-1/2">"{cmd.command}"</TableCell>
+                <TableCell className="text-gray-600 w-1/2">{cmd.description}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );

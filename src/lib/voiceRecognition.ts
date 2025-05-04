@@ -1,4 +1,3 @@
-
 // Voice recognition service
 type CommandCallback = (command: string, ...args: string[]) => void;
 
@@ -8,19 +7,20 @@ interface VoiceCommand {
 }
 
 export class VoiceRecognitionService {
-  private recognition: SpeechRecognition | null = null;
+  private recognition: any = null; // Changed from SpeechRecognition to any
   private isListening: boolean = false;
   private commands: VoiceCommand[] = [];
   private onStartListeningCallbacks: (() => void)[] = [];
   private onStopListeningCallbacks: (() => void)[] = [];
   private onResultCallbacks: ((result: string) => void)[] = [];
   private onInterimResultCallbacks: ((result: string) => void)[] = [];
-  private onErrorCallbacks: ((error: SpeechRecognitionErrorEvent) => void)[] = [];
+  private onErrorCallbacks: ((error: any) => void)[] = [];
   
   constructor() {
     if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      this.recognition = new SpeechRecognition();
+      // Changed to avoid TypeScript errors
+      const SpeechRecognitionAPI: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      this.recognition = new SpeechRecognitionAPI();
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
       this.recognition.lang = 'en-US';
@@ -121,7 +121,7 @@ export class VoiceRecognitionService {
     this.onInterimResultCallbacks.push(callback);
   }
   
-  onError(callback: (error: SpeechRecognitionErrorEvent) => void) {
+  onError(callback: (error: any) => void) {
     this.onErrorCallbacks.push(callback);
   }
   
@@ -171,7 +171,7 @@ export class VoiceSynthesisService {
 
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
   }
 }

@@ -12,6 +12,13 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Send, ArrowLeft } from 'lucide-react';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const MailComposer = () => {
   const { draftEmail, setDraftEmail, sendEmail, setComposeMode } = useVoiceMail();
@@ -19,6 +26,23 @@ export const MailComposer = () => {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     sendEmail();
+  };
+
+  const indianRecipients = [
+    { name: "Monish", email: "monish@example.com" },
+    { name: "Subash", email: "subash@example.com" },
+    { name: "Soundarya", email: "soundarya@example.com" },
+    { name: "Yukesh", email: "yukesh@example.com" },
+    { name: "Priya", email: "priya@example.com" },
+    { name: "Raj", email: "raj@example.com" },
+    { name: "Divya", email: "divya@example.com" },
+    { name: "Anand", email: "anand@example.com" },
+    { name: "Kavitha", email: "kavitha@example.com" },
+    { name: "Sanjay", email: "sanjay@example.com" }
+  ];
+
+  const handleRecipientChange = (value: string) => {
+    setDraftEmail({ ...draftEmail, to: value });
   };
 
   return (
@@ -40,12 +64,28 @@ export const MailComposer = () => {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="to">To</Label>
-            <Input
-              id="to"
-              placeholder="recipient@example.com"
-              value={draftEmail.to}
-              onChange={(e) => setDraftEmail({ ...draftEmail, to: e.target.value })}
-            />
+            <div className="flex gap-2">
+              <div className="flex-grow">
+                <Input
+                  id="to"
+                  placeholder="recipient@example.com"
+                  value={draftEmail.to}
+                  onChange={(e) => setDraftEmail({ ...draftEmail, to: e.target.value })}
+                />
+              </div>
+              <Select onValueChange={handleRecipientChange}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Select contact" />
+                </SelectTrigger>
+                <SelectContent>
+                  {indianRecipients.map((recipient) => (
+                    <SelectItem key={recipient.email} value={recipient.email}>
+                      {recipient.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="space-y-2">

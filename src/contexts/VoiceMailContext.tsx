@@ -101,6 +101,8 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
       if (composeMode) {
         setDraftEmail(prev => ({ ...prev, subject }));
         voiceSynthesis.speak(`Subject set to: ${subject}`);
+      } else {
+        voiceSynthesis.speak("Please compose an email first before setting the subject");
       }
     });
 
@@ -110,6 +112,8 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
         const messageContent = message1 || message2;
         setDraftEmail(prev => ({ ...prev, body: messageContent }));
         voiceSynthesis.speak("Message body updated");
+      } else {
+        voiceSynthesis.speak("Please compose an email first before setting the message");
       }
     });
 
@@ -117,6 +121,8 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     voiceRecognition.addCommand(/send( email)?/i, () => {
       if (composeMode) {
         sendEmail();
+      } else {
+        voiceSynthesis.speak("No email to send. Please compose an email first.");
       }
     });
 
@@ -131,6 +137,38 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
         readEmail(latestEmail);
       } else {
         voiceSynthesis.speak("You have no emails to read");
+      }
+    });
+
+    // Command to read unread emails
+    voiceRecognition.addCommand(/read unread( emails)?/i, () => {
+      const unreadEmails = emails.filter(email => !email.read);
+      if (unreadEmails.length > 0) {
+        voiceSynthesis.speak(`You have ${unreadEmails.length} unread emails`);
+        // Read the latest unread email
+        const latestUnread = [...unreadEmails].sort((a, b) => 
+          b.date.getTime() - a.date.getTime()
+        )[0];
+        readEmail(latestUnread);
+      } else {
+        voiceSynthesis.speak("You have no unread emails");
+      }
+    });
+
+    // Command to read email from specific sender
+    voiceRecognition.addCommand(/read email from (.+)/i, (_, sender) => {
+      const senderEmails = emails.filter(email => 
+        email.from.toLowerCase().includes(sender.toLowerCase())
+      );
+      
+      if (senderEmails.length > 0) {
+        const latestFromSender = [...senderEmails].sort((a, b) => 
+          b.date.getTime() - a.date.getTime()
+        )[0];
+        
+        readEmail(latestFromSender);
+      } else {
+        voiceSynthesis.speak(`No emails found from ${sender}`);
       }
     });
 
@@ -149,6 +187,17 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
       setComposeMode(false);
       setCurrentEmail(null);
       voiceSynthesis.speak("Back to inbox");
+    });
+
+    // Command to count unread emails
+    voiceRecognition.addCommand(/how many (unread )?emails/i, (_, unreadMatch) => {
+      const checkUnread = !!unreadMatch;
+      if (checkUnread) {
+        const unreadCount = emails.filter(email => !email.read).length;
+        voiceSynthesis.speak(`You have ${unreadCount} unread emails`);
+      } else {
+        voiceSynthesis.speak(`You have ${emails.length} total emails`);
+      }
     });
 
     // Command: Stop listening
