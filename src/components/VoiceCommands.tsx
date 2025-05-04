@@ -13,8 +13,12 @@ import {
   TableCell,
   TableRow
 } from '@/components/ui/table';
+import { Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 export const VoiceCommands = () => {
+  const [searchTerm, setSearchTerm] = React.useState('');
+  
   const commands = [
     { command: "compose", description: "Create a new email" },
     { command: "compose to [name]", description: "Create email to specific person" },
@@ -28,23 +32,43 @@ export const VoiceCommands = () => {
     { command: "how many unread emails", description: "Count unread emails" },
     { command: "delete", description: "Delete current email" },
     { command: "inbox", description: "Return to inbox" },
+    { command: "reply", description: "Reply to current email" },
+    { command: "forward", description: "Forward current email" },
+    { command: "mark as unread", description: "Mark current email as unread" },
+    { command: "archive", description: "Archive current email" },
+    { command: "search for [text]", description: "Search emails containing text" },
     { command: "stop listening", description: "Turn off voice recognition" }
   ];
 
+  const filteredCommands = commands.filter(cmd => 
+    cmd.command.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    cmd.description.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <Card>
-      <CardHeader>
+    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-100 shadow-md">
+      <CardHeader className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-t-lg">
         <CardTitle className="flex items-center justify-between">
           Voice Commands
           <VoiceWaveform />
         </CardTitle>
       </CardHeader>
-      <CardContent className="max-h-[600px] overflow-y-auto">
+      <CardContent className="max-h-[600px] overflow-y-auto pt-4">
+        <div className="relative mb-4">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+          <Input
+            placeholder="Search commands..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8 bg-white border-purple-100 focus-visible:ring-purple-400"
+          />
+        </div>
+        
         <Table>
           <TableBody>
-            {commands.map((cmd, idx) => (
-              <TableRow key={idx}>
-                <TableCell className="font-medium text-primary w-1/2">"{cmd.command}"</TableCell>
+            {filteredCommands.map((cmd, idx) => (
+              <TableRow key={idx} className="hover:bg-purple-50">
+                <TableCell className="font-medium text-purple-700 w-1/2">"{cmd.command}"</TableCell>
                 <TableCell className="text-gray-600 w-1/2">{cmd.description}</TableCell>
               </TableRow>
             ))}

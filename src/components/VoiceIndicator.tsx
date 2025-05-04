@@ -18,22 +18,24 @@ export const VoiceIndicator = () => {
   }
 
   return (
-    <div className="fixed bottom-4 right-4 flex flex-col items-end">
+    <div className="fixed bottom-4 right-4 flex flex-col items-end z-50">
       {isListening && interimTranscript && (
-        <div className="mb-2 p-3 bg-white rounded-lg shadow-lg max-w-xs">
-          <p className="text-gray-600 text-sm">{interimTranscript}</p>
+        <div className="mb-2 p-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg shadow-lg max-w-xs opacity-90 backdrop-blur-sm">
+          <p className="text-sm">{interimTranscript}</p>
         </div>
       )}
       <Button 
         onClick={toggleListening}
         className={cn(
-          "rounded-full w-14 h-14 flex items-center justify-center",
-          isListening ? "bg-primary pulse-animation" : "bg-gray-200 text-gray-600"
+          "rounded-full w-16 h-16 flex items-center justify-center shadow-lg",
+          isListening 
+            ? "bg-gradient-to-r from-purple-500 to-indigo-600 pulse-animation" 
+            : "bg-gradient-to-r from-gray-200 to-gray-300 text-gray-600"
         )}
       >
         {isListening ? (
           <>
-            <Mic className="h-6 w-6 text-white" />
+            <Mic className="h-7 w-7 text-white" />
             <span className="sr-only">Stop Listening</span>
           </>
         ) : (
@@ -55,11 +57,11 @@ export const VoiceWaveform = () => {
   return (
     <div className="flex items-center justify-center h-8">
       <div className="flex items-end space-x-1">
-        <div className="wave"></div>
-        <div className="wave"></div>
-        <div className="wave"></div>
-        <div className="wave"></div>
-        <div className="wave"></div>
+        <div className="wave bg-white"></div>
+        <div className="wave bg-white"></div>
+        <div className="wave bg-white"></div>
+        <div className="wave bg-white"></div>
+        <div className="wave bg-white"></div>
       </div>
     </div>
   );
