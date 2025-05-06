@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mail } from 'lucide-react';
+import { Mail, Mic } from 'lucide-react';
 import { VoiceWaveform } from './VoiceIndicator';
 
 export const Header = () => {
@@ -11,7 +11,13 @@ export const Header = () => {
           <Mail className="h-6 w-6" />
           <h1 className="text-xl font-bold">Talking Mailbox</h1>
         </div>
-        <VoiceWaveform />
+        <div className="flex items-center">
+          <div className="hidden sm:flex mr-4 items-center bg-purple-700/50 px-3 py-1 rounded-full text-xs font-semibold">
+            <Mic className="h-3 w-3 mr-1" />
+            Voice Commands Only
+          </div>
+          <VoiceWaveform />
+        </div>
       </div>
     </header>
   );
