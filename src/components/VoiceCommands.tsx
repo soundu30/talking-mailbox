@@ -61,7 +61,13 @@ export const VoiceCommands = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-8 bg-white border-purple-100 focus-visible:ring-purple-400"
+            aria-label="Search commands"
           />
+        </div>
+        
+        <div className="bg-purple-100 p-3 rounded-lg mb-4 text-center text-purple-800">
+          <strong>Voice-only mode enabled</strong>
+          <p className="text-xs mt-1">Use the commands below by speaking them out loud</p>
         </div>
         
         <Table>

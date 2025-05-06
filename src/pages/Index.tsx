@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { VoiceMailProvider } from '@/contexts/VoiceMailContext';
 import { Header } from '@/components/Header';
 import { VoiceIndicator } from '@/components/VoiceIndicator';
@@ -8,10 +8,35 @@ import { MailComposer } from '@/components/MailComposer';
 import { MailDetail } from '@/components/MailDetail';
 import { VoiceCommands } from '@/components/VoiceCommands';
 import { useVoiceMail } from '@/contexts/VoiceMailContext';
+import { toast } from "@/components/ui/use-toast";
 
 // Main content component that uses the voice mail context
 const MailContent = () => {
-  const { composeMode, currentEmail } = useVoiceMail();
+  const { composeMode, currentEmail, isListening, voiceRecognition } = useVoiceMail();
+  
+  useEffect(() => {
+    // Display a toast notification about voice-only mode when component mounts
+    toast({
+      title: "Voice-Only Mode",
+      description: "This is a voice-controlled application. Use the microphone button to start giving voice commands.",
+      duration: 5000,
+    });
+  }, []);
+
+  // If not listening and recognition is available, show a prompt
+  useEffect(() => {
+    if (!isListening && voiceRecognition?.isSupported()) {
+      const timer = setTimeout(() => {
+        toast({
+          title: "Talking Mailbox",
+          description: "Click the microphone button to start giving voice commands",
+          duration: 3000,
+        });
+      }, 10000); // Show after 10 seconds of inactivity
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isListening, voiceRecognition]);
   
   let content;
   if (composeMode) {
@@ -45,7 +70,7 @@ const MailContent = () => {
 const Index = () => {
   return (
     <VoiceMailProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
         <Header />
         <MailContent />
         <VoiceIndicator />

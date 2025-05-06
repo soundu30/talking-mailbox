@@ -48,6 +48,86 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     body: ''
   });
 
+  // Function to send an email - defined before it's used in useEffect
+  const sendEmail = () => {
+    if (draftEmail.to && draftEmail.subject) {
+      const user = db.getUser();
+      
+      // Add email to "sent" in our mock DB
+      const newEmail = db.addEmail({
+        from: user.email,
+        to: draftEmail.to,
+        subject: draftEmail.subject,
+        body: draftEmail.body
+      });
+      
+      // Update emails list
+      setEmails(prevEmails => [...prevEmails, newEmail]);
+      
+      // Reset draft and exit compose mode
+      setDraftEmail({ to: '', subject: '', body: '' });
+      setComposeMode(false);
+      
+      // Notify user
+      if (voiceSynthesis) {
+        voiceSynthesis.speak("Email sent successfully");
+      }
+      
+      toast({
+        title: "Email Sent!",
+        description: "Your email has been sent successfully."
+      });
+    } else {
+      if (voiceSynthesis) {
+        voiceSynthesis.speak("Please provide a recipient and subject before sending");
+      }
+      
+      toast({
+        title: "Cannot Send Email",
+        description: "Please provide both recipient and subject.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Function to read an email - defined before it's used in useEffect
+  const readEmail = (email: Email) => {
+    setCurrentEmail(email);
+    
+    // Mark as read in database
+    db.markAsRead(email.id);
+    
+    // Update in local state too
+    setEmails(prevEmails => 
+      prevEmails.map(e => e.id === email.id ? { ...e, read: true } : e)
+    );
+    
+    // Read aloud
+    if (voiceSynthesis) {
+      const emailText = `From: ${email.from}. Subject: ${email.subject}. ${email.body}`;
+      voiceSynthesis.speak(emailText);
+    }
+  };
+
+  // Function to delete an email - defined before it's used in useEffect
+  const deleteEmail = (id: string) => {
+    // Delete from db
+    db.deleteEmail(id);
+    
+    // Remove from local state
+    setEmails(prevEmails => prevEmails.filter(email => email.id !== id));
+    
+    // If current email is deleted, clear it
+    if (currentEmail && currentEmail.id === id) {
+      setCurrentEmail(null);
+    }
+    
+    toast({
+      title: "Email Deleted",
+      description: "The email has been deleted."
+    });
+  };
+
   // Initialize voice services and load emails
   useEffect(() => {
     const recognition = new VoiceRecognitionService();
@@ -213,86 +293,6 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     if (voiceRecognition) {
       voiceRecognition.toggle();
     }
-  };
-
-  // Function to send an email
-  const sendEmail = () => {
-    if (draftEmail.to && draftEmail.subject) {
-      const user = db.getUser();
-      
-      // Add email to "sent" in our mock DB
-      const newEmail = db.addEmail({
-        from: user.email,
-        to: draftEmail.to,
-        subject: draftEmail.subject,
-        body: draftEmail.body
-      });
-      
-      // Update emails list
-      setEmails(prevEmails => [...prevEmails, newEmail]);
-      
-      // Reset draft and exit compose mode
-      setDraftEmail({ to: '', subject: '', body: '' });
-      setComposeMode(false);
-      
-      // Notify user
-      if (voiceSynthesis) {
-        voiceSynthesis.speak("Email sent successfully");
-      }
-      
-      toast({
-        title: "Email Sent!",
-        description: "Your email has been sent successfully."
-      });
-    } else {
-      if (voiceSynthesis) {
-        voiceSynthesis.speak("Please provide a recipient and subject before sending");
-      }
-      
-      toast({
-        title: "Cannot Send Email",
-        description: "Please provide both recipient and subject.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Function to read an email
-  const readEmail = (email: Email) => {
-    setCurrentEmail(email);
-    
-    // Mark as read in database
-    db.markAsRead(email.id);
-    
-    // Update in local state too
-    setEmails(prevEmails => 
-      prevEmails.map(e => e.id === email.id ? { ...e, read: true } : e)
-    );
-    
-    // Read aloud
-    if (voiceSynthesis) {
-      const emailText = `From: ${email.from}. Subject: ${email.subject}. ${email.body}`;
-      voiceSynthesis.speak(emailText);
-    }
-  };
-
-  // Function to delete an email
-  const deleteEmail = (id: string) => {
-    // Delete from db
-    db.deleteEmail(id);
-    
-    // Remove from local state
-    setEmails(prevEmails => prevEmails.filter(email => email.id !== id));
-    
-    // If current email is deleted, clear it
-    if (currentEmail && currentEmail.id === id) {
-      setCurrentEmail(null);
-    }
-    
-    toast({
-      title: "Email Deleted",
-      description: "The email has been deleted."
-    });
   };
 
   const contextValue: VoiceMailContextType = {

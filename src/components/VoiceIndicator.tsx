@@ -32,19 +32,17 @@ export const VoiceIndicator = () => {
             ? "bg-gradient-to-r from-purple-500 to-indigo-600 pulse-animation" 
             : "bg-gradient-to-r from-gray-200 to-gray-300 text-gray-600"
         )}
+        aria-label={isListening ? "Stop listening" : "Start listening"}
       >
         {isListening ? (
-          <>
-            <Mic className="h-7 w-7 text-white" />
-            <span className="sr-only">Stop Listening</span>
-          </>
+          <Mic className="h-7 w-7 text-white" />
         ) : (
-          <>
-            <MicOff className="h-6 w-6" />
-            <span className="sr-only">Start Listening</span>
-          </>
+          <MicOff className="h-6 w-6" />
         )}
       </Button>
+      <div className="mt-2 text-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-xs font-medium">
+        Voice-only mode
+      </div>
     </div>
   );
 };
