@@ -12,7 +12,7 @@ import { Send, ArrowLeft, Mic } from 'lucide-react';
 import { toast } from "@/components/ui/use-toast";
 
 export const MailComposer = () => {
-  const { draftEmail, sendEmail, setComposeMode, voiceSynthesis, isListening } = useVoiceMail();
+  const { draftEmail, sendEmail, setComposeMode, voiceSynthesis, isListening, transcript } = useVoiceMail();
 
   useEffect(() => {
     // Announce voice commands when component mounts

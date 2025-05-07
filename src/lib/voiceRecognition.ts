@@ -1,3 +1,4 @@
+
 // Voice recognition service
 type CommandCallback = (command: string, ...args: string[]) => void;
 
@@ -92,6 +93,10 @@ export class VoiceRecognitionService {
   
   addCommand(pattern: RegExp, action: CommandCallback) {
     this.commands.push({ pattern, action });
+  }
+  
+  clearCommands() {
+    this.commands = [];
   }
   
   private processCommand(text: string) {

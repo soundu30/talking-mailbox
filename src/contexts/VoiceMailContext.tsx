@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { VoiceRecognitionService, VoiceSynthesisService } from '../lib/voiceRecognition';
 import { Email, db } from '../lib/db';
@@ -181,6 +182,9 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     if (!voiceRecognition || !voiceSynthesis) return;
 
+    // Clear all previous commands to avoid duplicates
+    voiceRecognition.clearCommands();
+
     // Command: Compose new email
     voiceRecognition.addCommand(/compose( new email)?( to (.+))?/i, (_, __, toMatch) => {
       const to = toMatch ? toMatch.trim() : '';
@@ -199,23 +203,24 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Enhanced command for setting recipient separately
     voiceRecognition.addCommand(/to (.+)/i, (_, recipient) => {
-      if (composeMode) {
-        const recipientName = recipient.trim();
-        setDraftEmail(prev => ({ ...prev, to: recipientName }));
-        voiceSynthesis.speak(`Recipient set to: ${recipientName}`);
-        toast({
-          title: "Recipient added",
-          description: `Email to: ${recipientName}`
-        });
-      } else {
+      const recipientName = recipient.trim();
+      
+      if (!composeMode) {
         setComposeMode(true);
-        const recipientName = recipient.trim();
         setDraftEmail(prev => ({ ...prev, to: recipientName }));
         voiceSynthesis.speak(`Creating new email to ${recipientName}`);
+      } else {
+        setDraftEmail(prev => ({ ...prev, to: recipientName }));
+        voiceSynthesis.speak(`Recipient set to: ${recipientName}`);
       }
+      
+      toast({
+        title: "Recipient added",
+        description: `Email to: ${recipientName}`
+      });
     });
 
-    // Enhanced command for setting subject
+    // Enhanced command for setting subject - FIXED to work in compose mode
     voiceRecognition.addCommand(/subject (.+)/i, (_, subject) => {
       if (composeMode) {
         const subjectText = subject.trim();
@@ -226,11 +231,20 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
           description: `Subject: ${subjectText}`
         });
       } else {
-        voiceSynthesis.speak("Please compose an email first before setting the subject");
+        setComposeMode(true);
+        setTimeout(() => {
+          const subjectText = subject.trim();
+          setDraftEmail(prev => ({ ...prev, subject: subjectText }));
+          voiceSynthesis.speak(`Created new email with subject: ${subjectText}`);
+          toast({
+            title: "New email with subject",
+            description: `Subject: ${subjectText}`
+          });
+        }, 100);
       }
     });
 
-    // Enhanced command for setting body/message with better handling
+    // Enhanced command for setting body/message with better handling - FIXED
     voiceRecognition.addCommand(/message (.+)|body (.+)/i, (_, message1, message2) => {
       if (composeMode) {
         const messageContent = (message1 || message2).trim();
@@ -241,7 +255,16 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
           description: "Email message has been updated"
         });
       } else {
-        voiceSynthesis.speak("Please compose an email first before setting the message");
+        setComposeMode(true);
+        setTimeout(() => {
+          const messageContent = (message1 || message2).trim();
+          setDraftEmail(prev => ({ ...prev, body: messageContent }));
+          voiceSynthesis.speak("Created new email with message body");
+          toast({
+            title: "New email with message",
+            description: "Email created with message body"
+          });
+        }, 100);
       }
     });
 
