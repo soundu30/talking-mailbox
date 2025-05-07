@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { VoiceRecognitionService, VoiceSynthesisService } from '../lib/voiceRecognition';
 import { Email, db } from '../lib/db';
@@ -139,6 +138,9 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Set up recognition event handlers
     recognition.onStartListening(() => {
       setIsListening(true);
+      
+      // Clear interim transcript when starting to listen
+      setInterimTranscript('');
     });
     
     recognition.onStopListening(() => {
@@ -147,6 +149,10 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     
     recognition.onResult((result) => {
       setTranscript(result);
+      console.log("Voice command recognized:", result);
+      
+      // Clear interim transcript after final result
+      setInterimTranscript('');
     });
     
     recognition.onInterimResult((result) => {
@@ -156,6 +162,13 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
     // Load initial emails
     const loadedEmails = db.getEmails();
     setEmails(loadedEmails);
+    
+    // Welcome message
+    setTimeout(() => {
+      if (synthesis) {
+        synthesis.speak("Welcome to Talking Mailbox. Click the microphone button and try saying a command.");
+      }
+    }, 1000);
     
     // Clean up function
     return () => {
@@ -170,36 +183,91 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
 
     // Command: Compose new email
     voiceRecognition.addCommand(/compose( new email)?( to (.+))?/i, (_, __, toMatch) => {
-      const to = toMatch || '';
+      const to = toMatch ? toMatch.trim() : '';
       setComposeMode(true);
-      setDraftEmail(prev => ({ ...prev, to }));
-      voiceSynthesis.speak("Creating new email" + (to ? ` to ${to}` : ""));
+      if (to) {
+        setDraftEmail(prev => ({ ...prev, to }));
+        voiceSynthesis.speak(`Creating new email to ${to}`);
+        toast({
+          title: "Recipient added",
+          description: `Email to: ${to}`
+        });
+      } else {
+        voiceSynthesis.speak("Creating new email. Say 'to' followed by the recipient name");
+      }
     });
 
-    // Command: Set subject
+    // Enhanced command for setting recipient separately
+    voiceRecognition.addCommand(/to (.+)/i, (_, recipient) => {
+      if (composeMode) {
+        const recipientName = recipient.trim();
+        setDraftEmail(prev => ({ ...prev, to: recipientName }));
+        voiceSynthesis.speak(`Recipient set to: ${recipientName}`);
+        toast({
+          title: "Recipient added",
+          description: `Email to: ${recipientName}`
+        });
+      } else {
+        setComposeMode(true);
+        const recipientName = recipient.trim();
+        setDraftEmail(prev => ({ ...prev, to: recipientName }));
+        voiceSynthesis.speak(`Creating new email to ${recipientName}`);
+      }
+    });
+
+    // Enhanced command for setting subject
     voiceRecognition.addCommand(/subject (.+)/i, (_, subject) => {
       if (composeMode) {
-        setDraftEmail(prev => ({ ...prev, subject }));
-        voiceSynthesis.speak(`Subject set to: ${subject}`);
+        const subjectText = subject.trim();
+        setDraftEmail(prev => ({ ...prev, subject: subjectText }));
+        voiceSynthesis.speak(`Subject set to: ${subjectText}`);
+        toast({
+          title: "Subject added",
+          description: `Subject: ${subjectText}`
+        });
       } else {
         voiceSynthesis.speak("Please compose an email first before setting the subject");
       }
     });
 
-    // Command: Set body/message
+    // Enhanced command for setting body/message with better handling
     voiceRecognition.addCommand(/message (.+)|body (.+)/i, (_, message1, message2) => {
       if (composeMode) {
-        const messageContent = message1 || message2;
+        const messageContent = (message1 || message2).trim();
         setDraftEmail(prev => ({ ...prev, body: messageContent }));
         voiceSynthesis.speak("Message body updated");
+        toast({
+          title: "Message added",
+          description: "Email message has been updated"
+        });
       } else {
         voiceSynthesis.speak("Please compose an email first before setting the message");
       }
     });
 
-    // Command: Send email
+    // Command: Send email with more explicit feedback
     voiceRecognition.addCommand(/send( email)?/i, () => {
       if (composeMode) {
+        if (!draftEmail.to) {
+          voiceSynthesis.speak("Please specify a recipient first by saying 'to' followed by a name");
+          toast({
+            title: "Recipient needed",
+            description: "Say 'to [name]' to add a recipient",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        if (!draftEmail.subject) {
+          voiceSynthesis.speak("Please specify a subject first by saying 'subject' followed by your subject");
+          toast({
+            title: "Subject needed",
+            description: "Say 'subject [text]' to add a subject",
+            variant: "destructive"
+          });
+          return;
+        }
+        
         sendEmail();
       } else {
         voiceSynthesis.speak("No email to send. Please compose an email first.");
@@ -286,12 +354,24 @@ export const VoiceMailProvider: React.FC<{ children: ReactNode }> = ({ children 
       voiceRecognition.stop();
     });
 
-  }, [voiceRecognition, voiceSynthesis, composeMode, emails, currentEmail]);
+  }, [voiceRecognition, voiceSynthesis, composeMode, emails, currentEmail, draftEmail]);
 
   // Function to toggle voice recognition
   const toggleListening = () => {
     if (voiceRecognition) {
-      voiceRecognition.toggle();
+      if (isListening) {
+        voiceRecognition.stop();
+      } else {
+        // Provide context-specific guidance when starting to listen
+        if (composeMode) {
+          toast({
+            title: "Voice commands for composing",
+            description: "Say 'to [name]', 'subject [text]', or 'message [text]'",
+            duration: 4000,
+          });
+        }
+        voiceRecognition.start();
+      }
     }
   };
 

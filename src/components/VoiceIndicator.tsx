@@ -6,7 +6,7 @@ import { useVoiceMail } from '@/contexts/VoiceMailContext';
 import { cn } from '@/lib/utils';
 
 export const VoiceIndicator = () => {
-  const { isListening, toggleListening, interimTranscript, voiceRecognition } = useVoiceMail();
+  const { isListening, toggleListening, interimTranscript, voiceRecognition, composeMode, draftEmail } = useVoiceMail();
 
   if (!voiceRecognition?.isSupported()) {
     return (
@@ -24,6 +24,19 @@ export const VoiceIndicator = () => {
           <p className="text-sm">{interimTranscript}</p>
         </div>
       )}
+      
+      {composeMode && !isListening && (
+        <div className="mb-2 p-4 bg-orange-500 text-white rounded-lg shadow-lg max-w-xs opacity-90 backdrop-blur-sm">
+          <p className="text-sm font-bold">Tap mic and use these commands:</p>
+          <ul className="text-xs mt-1 list-disc pl-4">
+            <li>To add recipient: "to [name]"</li>
+            <li>To add subject: "subject [your subject]"</li>
+            <li>To add message: "message [your message]"</li>
+            <li>To send email: "send email"</li>
+          </ul>
+        </div>
+      )}
+      
       <Button 
         onClick={toggleListening}
         className={cn(
